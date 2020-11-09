@@ -33,7 +33,7 @@ OMEXML, the chosen format of The Open Microscopy Environment is used https://doc
 
 For `.ome.tif` and `.czi`, these are embedded within the image file. You may choose a metadata path if you would like to override the information embedded within the image's metadata (such as channel names).
 
-For all other file types, a metadata path is necessary.
+For all other file types, a metadata path in the OMEXML format is necessary. The most important fields are `SizeX`,`SizeY`,`SizeZ`,`SizeC` and the `Channel..Name` fields. An example XML file is included.
 
 ## Output 
 While running the notebook, plots will be generated in the notebook output. As you see them, note the accuracy of the segmentations. If results are very wrong, try updating the `ESTIMATED_DIAMETER` parameter.
