@@ -1,0 +1,34 @@
+<OME xmlns="http://www.openmicroscopy.org/Schemas/OME/2015-01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openmicroscopy.org/Schemas/OME/2015-01 http://www.openmicroscopy.org/Schemas/OME/2015-01/ome.xsd">
+  <Instrument ID="Microscope">
+    <Detector ID="HamamatsuHam_DCAM" Manufacturer="HamamatsuHam_DCAM" Model="C11440-22CU" SerialNumber="S/N: 8X0501"/>
+  </Instrument>
+  <Image ID="Image:0" Name="Well01_HEK_2_MMStack_Pos0">
+    <AcquisitionDate>2020-08-14T16:45:13</AcquisitionDate>
+    <Description/>
+    <InstrumentRef ID="Microscope"/>
+    <StageLabel Name="Pos0" X="9953.9" XUnit="µm" Y="-7525.900000000001" YUnit="µm"/>
+    <Pixels BigEndian="false" DimensionOrder="XYCZT" ID="Pixels:0" PhysicalSizeX="0.3358" PhysicalSizeXUnit="µm" PhysicalSizeY="0.3358" PhysicalSizeYUnit="µm" SizeC="3" SizeT="1" SizeX="1024" SizeY="1024" SizeZ="1" Type="uint16">
+      <Channel Color="-16750849" ID="Channel:0:0" Name="DAPI - Clean" SamplesPerPixel="1">
+        <LightPath/>
+      </Channel>
+      <Channel Color="-13369549" ID="Channel:0:1" Name="FITC - Clean" SamplesPerPixel="1">
+        <LightPath/>
+      </Channel>
+      <Channel Color="-65485" ID="Channel:0:2" Name="Cy5 - Clean" SamplesPerPixel="1">
+        <LightPath/>
+      </Channel>
+      <TiffData FirstC="0" FirstT="0" FirstZ="0" IFD="0" PlaneCount="1">
+        <UUID FileName="Well01_HEK_2_MMStack_Pos0.ome.tif">urn:uuid:f3e644f6-f4e6-44d9-a51f-34004f8b8a86</UUID>
+      </TiffData>
+      <TiffData FirstC="1" FirstT="0" FirstZ="0" IFD="1" PlaneCount="1">
+        <UUID FileName="Well01_HEK_2_MMStack_Pos0.ome.tif">urn:uuid:f3e644f6-f4e6-44d9-a51f-34004f8b8a86</UUID>
+      </TiffData>
+      <TiffData FirstC="2" FirstT="0" FirstZ="0" IFD="2" PlaneCount="1">
+        <UUID FileName="Well01_HEK_2_MMStack_Pos0.ome.tif">urn:uuid:f3e644f6-f4e6-44d9-a51f-34004f8b8a86</UUID>
+      </TiffData>
+      <Plane DeltaT="564.0" DeltaTUnit="ms" ExposureTime="10.036690160632133" ExposureTimeUnit="ms" PositionX="9953.9" PositionXUnit="µm" PositionY="-7525.900000000001" PositionYUnit="µm" PositionZ="-15.100000000000001" PositionZUnit="µm" TheC="0" TheT="0" TheZ="0"/>
+      <Plane DeltaT="1150.0" DeltaTUnit="ms" ExposureTime="100.03560036420822" ExposureTimeUnit="ms" PositionX="9953.9" PositionXUnit="µm" PositionY="-7525.900000000001" PositionYUnit="µm" PositionZ="-15.100000000000001" PositionZUnit="µm" TheC="1" TheT="0" TheZ="0"/>
+      <Plane DeltaT="1790.0" DeltaTUnit="ms" ExposureTime="100.0161" ExposureTimeUnit="ms" PositionX="9953.9" PositionXUnit="µm" PositionY="-7525.900000000001" PositionYUnit="µm" PositionZ="-15.100000000000001" PositionZUnit="µm" TheC="2" TheT="0" TheZ="0"/>
+    </Pixels>
+  </Image>
+</OME>
