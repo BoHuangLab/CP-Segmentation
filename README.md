@@ -14,7 +14,7 @@ Open `Segmentation Notebook.ipynb` and fill in the following parameters within t
   * Default: None
 * `FEATURE_TO_SEGMENT`
   *'nuclei' or 'cyto'
-*` NUCLEI_CHANNELS`
+* ` NUCLEI_CHANNELS`
   * Enter the channels which correspond to the nucleus. 
   * ONLY ENTER THE CHANNELS YOU WOULD LIKE TO BE CONSIDERED IN THE SEGMENTATION. 
   * The pixel values from the generated masks will be calculated on all channels.
