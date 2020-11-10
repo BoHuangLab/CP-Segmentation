@@ -294,8 +294,6 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
     if len(channel_names) != metadata['SizeC']:
         channel_names = ['Channel ' + str(i+1) for i in range(int(metadata['SizeC']))]
 
-    channels_to_analyze = nucleus_channels + cyto_channels
-
     data = np.load(npy_path, allow_pickle=True).item()
 
     outlines_array = data['outlines']
@@ -318,7 +316,7 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
     background_list = []
     background_subtracted_list = []
 
-    for channel in channels_to_analyze:
+    for channel in range(len(metadata['Channels'])):
 
         channel_label = str(channel_names[channel-1])
         full_columns.extend([
@@ -436,7 +434,7 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
     if len(channel_names) != metadata['SizeC']:
         channel_names = ['Channel ' + str(i+1) for i in range(int(metadata['SizeC']))]
 
-    channels_to_analyze = nucleus_channels + cyto_channels
+    #channels_to_analyze = range(1,int(metadata['SizeC'])+1)
 
     masks_array = np.array(masks)
 
@@ -456,7 +454,7 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
     background_images = []
     background_subtracted_images = []
 
-    for channel in channels_to_analyze:
+    for channel in range(len(metadata['Channels'])):
 
         channel_images = []
         channel_subtracted_images = []
