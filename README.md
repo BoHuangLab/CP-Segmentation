@@ -1,5 +1,5 @@
 # CP-Segmentation
-### Version 2.0
+### Version 2.0.1B
 This repo contains files used to perform automated cell segmentation via the Cellpose package from mouseland.
 
 ## Getting Started
