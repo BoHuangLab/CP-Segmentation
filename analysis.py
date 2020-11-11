@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from skimage.color import rgb2gray
 from skimage.morphology import white_tophat, black_tophat, disk
 
 import tifffile
@@ -159,7 +160,6 @@ def segmentation_model(image_group,channels,cyto_channels, nucleus_channels, est
         path = image_paths[idx]
 
         active_folder = os.path.split(path)[0]
-        filename = os.path.split(path)[1]
         new_folder = os.path.join(active_folder,str(feature_to_segment)+'_mask')
 
         name = Path(path).stem
@@ -227,7 +227,7 @@ def segmentation_model_3d(image_group,channels,cyto_channels, nucleus_channels, 
     image_paths = [set[1] for set in image_group]
 
     if estimated_diameter is None:
-            raise ValueErorr('You must input an estimated diameter \
+            raise ValueError('You must input an estimated diameter \
             to perform 3D segmentation. \n \
             Only 2D segmentation will be performed.')
 
@@ -249,7 +249,6 @@ def segmentation_model_3d(image_group,channels,cyto_channels, nucleus_channels, 
         path = image_paths[idx]
 
         active_folder = os.path.split(path)[0]
-        filename = os.path.split(path)[1]
         new_folder = os.path.join(active_folder,str(feature_to_segment)+'_mask')
 
         if '.ome.tif' in path:
@@ -318,17 +317,17 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
 
     for channel in range(len(metadata['Channels'])):
 
-        channel_label = str(channel_names[channel-1])
+        channel_label = str(channel_names[channel])
         full_columns.extend([
             channel_label + ' Intensity (Magnitude/px^2)',
-            channel_label + ' Variance',
+            channel_label + ' Standard Deviation (Magnitude/px^2)',
             channel_label + ' Background Intensity (Magnitude/px^2)'
         ])
 
 
-        image_data = image[channel-1]
+        image_data = image[channel]
 
-        bg_subtracted_array, bg_array = generate_channel_data(image_data, block_size, export_path)
+        bg_subtracted_array, bg_array = generate_channel_data(image_data, block_size*3, export_path)
 
         channel_intensity_dict.update(
                 {channel_label: [bg_subtracted_array[channel], bg_array[channel]]})
@@ -363,15 +362,15 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         if area > 0:
             nonzero_array = np.nonzero(mask_name_array)
 
+            flows_name_array = mask_name_array*rgb2gray(flows_array[0][0])
 
-            x_min =  np.min(nonzero_array[1]) + 1
-            x_max = np.max(nonzero_array[1]) + 1
-            x_center = (x_min + x_max) / 2
+            center = flows_name_array*(flows_name_array < 15)
+            center = flows_name_array*(flows_name_array > 0)
+
+            x_center = np.median(center[1]) + 1
             new_data_dict.update({'Center X': x_center})
 
-            y_min = np.min(nonzero_array[0]) + 1
-            y_max = np.max(nonzero_array[0]) + 1
-            y_center = (y_min + y_max) / 2
+            y_center = np.median(center[0]) + 1
             new_data_dict.update({'Center Y': y_center})
 
             for channel_label in channel_names:
@@ -385,8 +384,8 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
                     new_data_dict.update({
                         channel_label + ' Intensity (Magnitude/px^2)':
                         intensity/area,
-                        channel_label + ' Variance':
-                        variance * (1/area)**2,
+                        channel_label + ' Standard Deviation (Magnitude/px^2)':
+                        np.sqrt(variance) * (1/area),
                         channel_label + ' Background Intensity (Magnitude/px^2)':
                         background_intensity/area
                     })
@@ -410,11 +409,11 @@ def generate_channel_data(image_data, block_size,export_path):
     return bg_subtracted_array, background
 
 def rolling_ball(image, radius=50, light_bg=False):
-        str_el = disk(radius)
-        if light_bg:
-            return black_tophat(image, str_el)
-        else:
-            return white_tophat(image, str_el)
+    str_el = disk(radius)
+    if light_bg:
+        return black_tophat(image, str_el)
+    else:
+        return white_tophat(image, str_el)
 
 def calculate_channel_stats(mask_name_array, bg_subtracted_array, bg_array):
 
@@ -459,14 +458,14 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
         channel_images = []
         channel_subtracted_images = []
 
-        channel_label = str(channel_names[channel-1])
+        channel_label = str(channel_names[channel])
         full_columns.extend([
             channel_label + ' Intensity (Magnitude/px^3)',
-            channel_label + ' Variance',
+            channel_label + ' Standard Deviation (Magnitude/px^3)',
             channel_label + ' Background Intensity (Magnitude/px^3)'
         ])
 
-        image_data = image[:,channel-1,:,:]
+        image_data = image[:,channel,:,:]
 
         print('Calculating Mask Data..')
 
@@ -475,7 +474,7 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
         for layer in range(len(image_data)):
 
 
-            bg_subtracted_array, bg_array = generate_channel_data(image_data[layer], block_size, export_path)
+            bg_subtracted_array, bg_array = generate_channel_data(image_data[layer], block_size*3, export_path)
 
             layer_intensity_dict.update(
                 {layer:[bg_subtracted_array, bg_array]})
@@ -504,6 +503,8 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
 
         if area > 0:
             nonzero_array = np.nonzero(mask_name_array)
+
+            #need to update this to use flows
 
             x_min =  np.min(nonzero_array[1]) + 1
             x_max = np.max(nonzero_array[1]) + 1
@@ -539,11 +540,11 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
                         total_variance += variance
 
                     new_data_dict.update({
-                        channel_label + ' Intensity (Magnitude/px^2)':
+                        channel_label + ' Intensity (Magnitude/px^3)':
                         total_intensity/area,
-                        channel_label + ' Variance':
-                        total_variance * (1/area) ** 2,
-                        channel_label + ' Background Intensity (Magnitude/px^2)':
+                        channel_label + ' Standard Deviation (Magnitude/px^3)':
+                        np.sqrt(total_variance) * (1/area),
+                        channel_label + ' Background Intensity (Magnitude/px^3)':
                         total_background_intensity/area
                     })
 
