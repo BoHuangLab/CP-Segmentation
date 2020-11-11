@@ -337,8 +337,8 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         background_list.append(bg_array)
         background_subtracted_list.append(bg_subtracted_array)
 
-    background_list = np.dstack(background_list)
-    background_subtracted_list = np.dstack(background_subtracted_list)
+    background_list = np.stack(background_list, axis = 0)
+    background_subtracted_list = np.stack(background_subtracted_list, axis = 0)
 
     #background_list = bg_array
     #background_subtracted_list = bg_subtracted_array
@@ -551,7 +551,7 @@ def analyze_masks_3d(image, metadata,cyto_channels,nucleus_channels,title,npy_pa
 
             intensity_df = intensity_df.append(new_df, ignore_index=True, sort = False)
 
-        tifffile.imwrite(os.path.join(export_path,'Background Stack.tif'), np.stack(background_images), imagej=True)
+        tifffile.imwrite(os.path.join(export_path,'Background Stack.tif'), np.stack(background_images, axis = 0), imagej=True)
 
         tifffile.imwrite(os.path.join(export_path,'Background Subtracted Image Stack.tif'), np.stack(background_subtracted_images), imagej=True)
 
