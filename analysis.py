@@ -330,7 +330,7 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         bg_subtracted_array, bg_array = generate_channel_data(image_data, block_size*3, export_path)
 
         channel_intensity_dict.update(
-                {channel_label: [bg_subtracted_array[channel], bg_array[channel]]})
+                {channel_label: [bg_subtracted_array, bg_array]})
 
 
         background_list.append(bg_array)
@@ -354,26 +354,38 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
 
         mask_name_array = masks_array==mask_name
 
-        new_data_dict.update({'Mask Number': mask_name})
-
         area = np.sum(1*mask_name_array)
-        new_data_dict.update({'Area (px^2)': area})
-
+        
         if area > 0:
+            new_data_dict.update({'Mask Number': mask_name})
+
+            new_data_dict.update({'Area (px^2)': area})
+
             nonzero_array = np.nonzero(mask_name_array)
-
-            flows_name_array = np.array([mask_name_array,mask_name_array,mask_name_array]).transpose(1,2,0)*flows_array[0][0]
-            flows_name_array = np.sum(flows_name_array,axis=2)
-
-            center = (flows_name_array < 30)
-            center = center*(flows_name_array > 0)
-            center = np.where(center==True)
-
-            x_center = np.median(center[1]) + 1
+            
+            #BH: I temporarily reverted to the old XY calcualtion to fix the empty value issue
+            x_min =  np.min(nonzero_array[1]) + 1
+            x_max = np.max(nonzero_array[1]) + 1
+            x_center = (x_min + x_max) / 2
             new_data_dict.update({'Center X': x_center})
 
-            y_center = np.median(center[0]) + 1
+            y_min = np.min(nonzero_array[0]) + 1
+            y_max = np.max(nonzero_array[0]) + 1
+            y_center = (y_min + y_max) / 2
             new_data_dict.update({'Center Y': y_center})
+            
+            #flows_name_array = np.array([mask_name_array,mask_name_array,mask_name_array]).transpose(1,2,0)*flows_array[0][0]
+            #flows_name_array = np.sum(flows_name_array,axis=2)
+
+            #center = (flows_name_array < 30)
+            #center = center*(flows_name_array > 0)
+            #center = np.where(center==True)
+
+            #x_center = np.median(center[1]) + 1
+            #new_data_dict.update({'Center X': x_center})
+
+            #y_center = np.median(center[0]) + 1
+            #new_data_dict.update({'Center Y': y_center})
 
             for channel_label in channel_names:
                 if channel_label in list(channel_intensity_dict.keys()):
