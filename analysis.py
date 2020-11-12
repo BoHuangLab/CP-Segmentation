@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from skimage.color import rgb2gray
 from skimage.morphology import white_tophat, black_tophat, disk
 
 import tifffile
@@ -198,7 +197,7 @@ def segmentation_model(image_group,channels,cyto_channels, nucleus_channels, est
 
         tifffile.imwrite(new_folder + '/flows.tif',flowi)
 
-        print('Analyzing ' + str(name) + 'mask data...')
+        print('Analyzing ' + str(name) + ' mask data...')
 
         analyze_masks(image, metadata[idx],cyto_channels,nucleus_channels,title,npy_path,new_folder)
 
@@ -297,16 +296,12 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
 
     outlines_array = data['outlines']
     masks_array = data['masks']
-    flows_array = data['flows']
+    flows_array = data['flows'][0][0]
 
     block_size = int(data['est_diam'].item())
 
     if block_size % 2 == 0:
         block_size += 1
-
-    last_mask = np.max(data['masks'])
-    full_columns = ['Mask Number', 'Center X', 'Center Y', 'Area (px^2)']
-    intensity_df = pd.DataFrame(columns=full_columns)
 
     channel_intensity_dict = {}
 
@@ -314,16 +309,12 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
 
     background_list = []
     background_subtracted_list = []
+    channel_labels = []
 
     for channel in range(len(metadata['Channels'])):
 
         channel_label = str(channel_names[channel])
-        full_columns.extend([
-            channel_label + ' Intensity (Magnitude/px^2)',
-            channel_label + ' Standard Deviation (Magnitude)',
-            channel_label + ' Background Intensity (Magnitude/px^2)'
-        ])
-
+        channel_labels.append(channel_label)
 
         image_data = image[channel]
 
@@ -339,76 +330,71 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
     background_list = np.stack(background_list, axis = 0)
     background_subtracted_list = np.stack(background_subtracted_list, axis = 0)
 
-    #background_list = bg_array
-    #background_subtracted_list = bg_subtracted_array
-
     tifffile.imwrite(os.path.join(export_path,'Background.tif'), background_list, imagej=True)
 
     tifffile.imwrite(os.path.join(export_path,'Background Subtracted Image.tif'), background_subtracted_list, imagej=True)
 
     print('Calculating Mask Data..')
 
-    for mask_name in range(1, last_mask + 1):
+    background_t = background_list.transpose(1,2,0)
+    background_subtracted_list_t = background_subtracted_list.transpose(1,2,0)
 
-        new_data_dict = {}
+    indicesArray = np.moveaxis(np.indices(background_t.shape[:2]), 0, 2)
+    allArray = np.dstack((indicesArray, background_t)).reshape((-1, 2 + len(channel_labels)))
+    background_df = pd.DataFrame(allArray, columns=['y','x']+[label + ' Background Magnitude' for label in channel_labels])
 
-        mask_name_array = masks_array==mask_name
-        new_data_dict.update({'Mask Number': mask_name})
-        
-        area = np.sum(1*mask_name_array)
-        new_data_dict.update({'Area (px^2)': area})
-            
-        if area > 0:
-            nonzero_array = np.nonzero(mask_name_array)
-            
-            #BH: I temporarily reverted to the old XY calcualtion to fix the empty value issue
-            x_min =  np.min(nonzero_array[1]) + 1
-            x_max = np.max(nonzero_array[1]) + 1
-            x_center = (x_min + x_max) / 2
-            new_data_dict.update({'Center X': x_center})
+    indicesArray = np.moveaxis(np.indices(background_subtracted_list_t.shape[:2]), 0, 2)
+    allArray = np.dstack((indicesArray, background_subtracted_list_t)).reshape((-1, 2 + len(channel_labels)))
+    image_df = pd.DataFrame(allArray, columns=['y','x']+[label + ' Magnitude' for label in channel_labels])
 
-            y_min = np.min(nonzero_array[0]) + 1
-            y_max = np.max(nonzero_array[0]) + 1
-            y_center = (y_min + y_max) / 2
-            new_data_dict.update({'Center Y': y_center})
-            
-            #flows_name_array = np.array([mask_name_array,mask_name_array,mask_name_array]).transpose(1,2,0)*flows_array[0][0]
-            #flows_name_array = np.sum(flows_name_array,axis=2)
+    indicesArray =np.indices(masks_array.shape).transpose(1,2,0)
+    allArray = np.dstack((indicesArray, masks_array)).reshape((-1, 3))
+    masks_df = pd.DataFrame(allArray, columns=["y","x","Mask Number"])
+    masks_df.drop([0],0,inplace=True)
 
-            #center = (flows_name_array < 30)
-            #center = center*(flows_name_array > 0)
-            #center = np.where(center==True)
+    indicesArray =np.moveaxis(np.indices(flows_array.shape[:2]), 0, 2)
+    allArray = np.dstack((indicesArray, flows_array)).reshape((-1, 5))
+    flows_df = pd.DataFrame(allArray, columns=["y","x","red","green","blue"])
+    flows_df['flow'] = flows_df['red'] + flows_df['green'] + flows_df['blue']
+    flows_df.drop(['red','green','blue'],1,inplace=True)
+    flows_df.drop([0],0,inplace=True)
 
-            #x_center = np.median(center[1]) + 1
-            #new_data_dict.update({'Center X': x_center})
+    joined_df = pd.merge(masks_df,image_df,on=["y","x"],how="left")
+    joined_df = pd.merge(joined_df, background_df,on=["y","x"],how="left")
+    joined_df = pd.merge(joined_df, flows_df,on=["y","x"],how="left")
 
-            #y_center = np.median(center[0]) + 1
-            #new_data_dict.update({'Center Y': y_center})
+    final_df = joined_df.drop(['x','y'],1).groupby('Mask Number').sum()
+    final_df['Area']=joined_df.groupby('Mask Number').size()
+    final_df[[label + ' Standard Deviation (Magnitude)' for label in channel_labels]] = joined_df.groupby('Mask Number').std().drop(['x','y'],1)[[label + ' Magnitude' for label in channel_labels]]
 
-            for channel_label in channel_names:
-                if channel_label in list(channel_intensity_dict.keys()):
+    min_flow = joined_df.groupby('Mask Number').min().reset_index()[['Mask Number','flow']]
+    coords = pd.merge(min_flow,joined_df,on=['Mask Number','flow'],how='left')
+    min_coords = coords.groupby('Mask Number').median().reset_index()
+    min_coords = min_coords[['Mask Number','x','y']]
+    min_coords.rename(columns = {'x':'Center X (px)','y':'Center Y (px)'},inplace=True)
 
-                    bg_subtracted_array = channel_intensity_dict[channel_label][0]
-                    bg_array = channel_intensity_dict[channel_label][1]
-                    intensity, variance, background_intensity = calculate_channel_stats(
-                        mask_name_array, bg_subtracted_array, bg_array)
+    final_df = pd.merge(final_df,min_coords,on = 'Mask Number',how='left')
 
-                    new_data_dict.update({
-                        channel_label + ' Intensity (Magnitude/px^2)':
-                        intensity/area,
-                        channel_label + ' Standard Deviation (Magnitude)':
-                        np.sqrt(variance),
-                        channel_label + ' Background Intensity (Magnitude/px^2)':
-                        background_intensity/area
-                    })
+    final_df[[label + ' Magnitude' for label in channel_labels]] = final_df[[label + ' Magnitude' for label in channel_labels]].div(final_df.Area, axis=0)
 
-        new_df = pd.DataFrame(new_data_dict, index=[mask_name-1])
+    final_df.rename(columns = {label + ' Magnitude':label + ' Intensity (Magnitude/px^2)' for label in channel_labels}, inplace = True)
 
-        intensity_df = intensity_df.append(new_df, ignore_index=True, sort = False)
+    final_df[[label + ' Background Magnitude' for label in channel_labels]] = final_df[[label + ' Background Magnitude' for label in channel_labels]].div(final_df.Area, axis=0)
 
-    first_col = intensity_df.pop('Mask Number')
-    intensity_df.insert(0, 'Mask Number', first_col)
-    intensity_df.to_csv(os.path.join(export_path,title +
+    final_df.rename(columns = {label + ' Background Magnitude':label + ' Background Intensity (Magnitude/px^2)' for label in channel_labels} ,inplace = True)
+
+    final_df.rename(columns = {'Area':'Area (px^2)'},inplace = True)
+
+    flatten = lambda t: [item for sublist in t for item in sublist]
+
+    final_columns = ['Mask Number','Area (px^2)','Center X (px)','Center Y (px)'] + flatten([[label + ' Intensity (Magnitude/px^2)',
+                    label + ' Standard Deviation (Magnitude)',
+                    label + ' Background Intensity (Magnitude/px^2)'] for label in channel_labels])
+
+
+    final_df = final_df.reindex(columns = final_columns)
+
+    final_df.to_csv(os.path.join(export_path,title +
                         ' Cell Intensity Values.csv'),
                         index=False)
 
