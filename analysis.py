@@ -417,10 +417,16 @@ def rolling_ball(image, radius=50, light_bg=False):
 
 def calculate_channel_stats(mask_name_array, bg_subtracted_array, bg_array):
 
-    intensity = np.sum((mask_name_array*bg_subtracted_array).flatten())
-    variance = np.var((mask_name_array*bg_subtracted_array).flatten())
+    mask_pixels = (mask_name_array*bg_subtracted_array).flatten()
+    mask_pixels = mask_pixels[mask_pixels>0]
 
-    background_intensity = np.sum((mask_name_array*bg_array).flatten())
+    background_pixels = (mask_name_array*bg_subtracted_array).flatten()
+    background_pixels = background_pixels[background_pixels>0]
+
+    intensity = np.sum(mask_pixels)
+    variance = np.var(mask_pixels)
+
+    background_intensity = np.sum(backgroound_pixels)
 
     return intensity, variance, background_intensity
 
