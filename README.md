@@ -19,9 +19,9 @@ Open `Segmentation Notebook.ipynb` and fill in the following parameters within t
   * ONLY ENTER THE CHANNELS YOU WOULD LIKE TO BE CONSIDERED IN THE SEGMENTATION.
   * The pixel values from the generated masks will be calculated on all channels.
   * Example: [1,2] would mean nuclei data is on the first and second image channels
- * `CYTO_CHANNELS`
+* `CYTO_CHANNELS`
   * Similar to `NUCLEI_CHANNELS`
- * `ESTIMATED_DIAMATER`
+* `ESTIMATED_DIAMATER`
   * Enter the cell diameter in terms of pixels.
   * This is not a necessary parameter, but it will be significantly faster and more accurate if a value is offered.
   * REQUIRED for Z-stack images
@@ -70,3 +70,6 @@ A CSV file is outputted at the end of the segmentation, containing the following
   * Square root of variance of pixel values within mask area on `Background Subtracted Image.tif` / `Area`
 * `CHANNEL_NAME Background Intensity (Magnitude/px^2)` or `CHANNEL_NAME Background Intensity (Magnitude/px^3)`
   * Sum of pixel values within mask area on `Background.tif` / `Area`
+  
+  ## Reporting Errors
+Feel free to raise code issues over GitHub. If you encounter errors running the notebook that you'd like me to look at, please save the notebook and note the version number as well as the last printed image.
