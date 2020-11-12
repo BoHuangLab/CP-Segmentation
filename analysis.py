@@ -426,7 +426,7 @@ def calculate_channel_stats(mask_name_array, bg_subtracted_array, bg_array):
     intensity = np.sum(mask_pixels)
     variance = np.var(mask_pixels)
 
-    background_intensity = np.sum(backgroound_pixels)
+    background_intensity = np.sum(background_pixels)
 
     return intensity, variance, background_intensity
 
