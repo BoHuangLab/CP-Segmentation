@@ -353,14 +353,12 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         new_data_dict = {}
 
         mask_name_array = masks_array==mask_name
-
-        area = np.sum(1*mask_name_array)
+        new_data_dict.update({'Mask Number': mask_name})
         
+        area = np.sum(1*mask_name_array)
+        new_data_dict.update({'Area (px^2)': area})
+            
         if area > 0:
-            new_data_dict.update({'Mask Number': mask_name})
-
-            new_data_dict.update({'Area (px^2)': area})
-
             nonzero_array = np.nonzero(mask_name_array)
             
             #BH: I temporarily reverted to the old XY calcualtion to fix the empty value issue
