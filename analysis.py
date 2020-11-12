@@ -350,14 +350,12 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
     indicesArray =np.indices(masks_array.shape).transpose(1,2,0)
     allArray = np.dstack((indicesArray, masks_array)).reshape((-1, 3))
     masks_df = pd.DataFrame(allArray, columns=["y","x","Mask Number"])
-    masks_df.drop([0],0,inplace=True)
 
     indicesArray =np.moveaxis(np.indices(flows_array.shape[:2]), 0, 2)
     allArray = np.dstack((indicesArray, flows_array)).reshape((-1, 5))
     flows_df = pd.DataFrame(allArray, columns=["y","x","red","green","blue"])
     flows_df['flow'] = flows_df['red'] + flows_df['green'] + flows_df['blue']
     flows_df.drop(['red','green','blue'],1,inplace=True)
-    flows_df.drop([0],0,inplace=True)
 
     joined_df = pd.merge(masks_df,image_df,on=["y","x"],how="left")
     joined_df = pd.merge(joined_df, background_df,on=["y","x"],how="left")
@@ -391,6 +389,7 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
                     label + ' Standard Deviation (Magnitude)',
                     label + ' Background Intensity (Magnitude/px^2)'] for label in channel_labels])
 
+    final_df.drop([0],0,inplace=True)
 
     final_df = final_df.reindex(columns = final_columns)
 
