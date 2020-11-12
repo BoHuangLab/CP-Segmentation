@@ -320,7 +320,7 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         channel_label = str(channel_names[channel])
         full_columns.extend([
             channel_label + ' Intensity (Magnitude/px^2)',
-            channel_label + ' Standard Deviation (Magnitude/px^2)',
+            channel_label + ' Standard Deviation (Magnitude)',
             channel_label + ' Background Intensity (Magnitude/px^2)'
         ])
 
@@ -362,10 +362,12 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
         if area > 0:
             nonzero_array = np.nonzero(mask_name_array)
 
-            flows_name_array = mask_name_array*rgb2gray(flows_array[0][0])
+            flows_name_array = np.array([mask_name_array,mask_name_array,mask_name_array]).transpose(1,2,0)*flows_array[0][0]
+            flows_name_array = np.sum(flows_name_array,axis=2)
 
-            center = flows_name_array*(flows_name_array < 15)
-            center = flows_name_array*(flows_name_array > 0)
+            center = (flows_name_array < 30)
+            center = center*(flows_name_array > 0)
+            center = np.where(center==True)
 
             x_center = np.median(center[1]) + 1
             new_data_dict.update({'Center X': x_center})
@@ -384,8 +386,8 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
                     new_data_dict.update({
                         channel_label + ' Intensity (Magnitude/px^2)':
                         intensity/area,
-                        channel_label + ' Standard Deviation (Magnitude/px^2)':
-                        np.sqrt(variance) * (1/area),
+                        channel_label + ' Standard Deviation (Magnitude)':
+                        np.sqrt(variance),
                         channel_label + ' Background Intensity (Magnitude/px^2)':
                         background_intensity/area
                     })
@@ -420,7 +422,7 @@ def calculate_channel_stats(mask_name_array, bg_subtracted_array, bg_array):
     mask_pixels = (mask_name_array*bg_subtracted_array).flatten()
     mask_pixels = mask_pixels[mask_pixels>0]
 
-    background_pixels = (mask_name_array*bg_subtracted_array).flatten()
+    background_pixels = (mask_name_array*bg_array).flatten()
     background_pixels = background_pixels[background_pixels>0]
 
     intensity = np.sum(mask_pixels)

@@ -1,5 +1,5 @@
 # CP-Segmentation
-### Version 2.0.3
+### Version 2.0.4
 This repo contains files used to perform automated cell segmentation via the Cellpose package from mouseland.
 
 ## Getting Started
@@ -66,7 +66,7 @@ A CSV file is outputted at the end of the segmentation, containing the following
   * number of pixels with mask name
 * `CHANNEL_NAME (Magnitude/px^2)` or `CHANNEL_NAME (Magnitude/px^3)`
   * Sum of pixel values within mask area on `Background Subtracted Image.tif` / `Area`
-* `CHANNEL_NAME Standard Deviation (Magnitude/px^2)` or `CHANNEL_NAME Standard Deviation (Magnitude/px^3)`
+* `CHANNEL_NAME Standard Deviation (Magnitude)`
   * Square root of variance of pixel values within mask area on `Background Subtracted Image.tif` / `Area`
 * `CHANNEL_NAME Background Intensity (Magnitude/px^2)` or `CHANNEL_NAME Background Intensity (Magnitude/px^3)`
   * Sum of pixel values within mask area on `Background.tif` / `Area`
