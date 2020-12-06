@@ -5,8 +5,9 @@ This repo contains files used to perform automated cell segmentation via the Cel
 ## Getting Started
 The program recognizes the following image formats: `.ome.tif, .czi, .jpg, .png, .gif, .tif`.
 
-Clone this repo into your own folder into
-Open `Segmentation Notebook.ipynb` and fill in the following parameters within the first cell:
+Clone this repo into your own folder.
+Open `Segmentation Notebook.ipynb`. 
+Fill in the following parameters within the first cell:
 * `PARENT_PATH`
   * This should be the highest level folder containing only the images you would like to segment.
 * `METADATA_PATH`
