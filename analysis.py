@@ -10,7 +10,6 @@ from skimage.morphology import white_tophat, black_tophat, disk
 
 import tifffile
 
-from cellpose import models
 from cellpose import plot
 from cellpose import io
 
@@ -36,15 +35,15 @@ def run_segmentation(parent_folder, images,metadata, image_paths, cyto_channels,
         elif feature_to_segment in ('cyto','nuclei'):
             segmentation_model(images_2d,channels,cyto_channels, nucleus_channels, estimated_diameter,feature_to_segment,model)
 
-    if len(images_3d) > 0:
-        if feature_to_segment == 'both':
-            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter, 'cyto',model)
+#    if len(images_3d) > 0:
+#        if feature_to_segment == 'both':
+#            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter, 'cyto',model)
 
 
-            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter, 'nuclei',model)
+#            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter, 'nuclei',model)
 
-        elif feature_to_segment in ('cyto','nuclei'):
-            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter,feature_to_segment,model)
+#        elif feature_to_segment in ('cyto','nuclei'):
+#            segmentation_model_3d(images_3d,channels,cyto_channels, nucleus_channels, estimated_diameter,feature_to_segment,model)
 
     gc.collect()
 
@@ -68,14 +67,26 @@ def prepare_image_to_segment(images, metadata, image_paths, cyto_channels, nucle
         data_type = image.dtype
 
         slices = int(metadata[idx]['SizeZ'])
+        
 
-        cyto_channel, nucleus_channel = stack_and_combine_channels(image, slices, cyto_channels, nucleus_channels)
+
 
         if slices == 1:
+            
+            if len(image.shape) == 2:
+                image = np.expand_dims(image,axis=0)
+                
+            cyto_channel, nucleus_channel = stack_and_combine_channels(image, slices, cyto_channels, nucleus_channels)
             final_image = stack_images(cyto_channel, nucleus_channel, slices).astype(data_type)
             images_2d.append([image, final_image, metadata[idx],image_paths[idx]])
 
         elif slices > 1:
+            
+            if len(image.shape) == 2:
+                image = np.expand_dims(image,axis=1)
+                
+            cyto_channel, nucleus_channel = stack_and_combine_channels(image, slices, cyto_channels, nucleus_channels)
+                
             final_image = stack_images(cyto_channel, nucleus_channel, slices).astype(data_type)
             images_3d.append([image, final_image, metadata[idx],image_paths[idx]])
 
@@ -110,6 +121,7 @@ def stack_and_combine_channels(image, slices, cyto_channels, nucleus_channels):
         nucleus_channel = []
 
     return cyto_channel, nucleus_channel
+
 
 def stack_images(cyto_channel, nucleus_channel, slices):
 
@@ -183,6 +195,14 @@ def segmentation_model(image_group,channels,cyto_channels, nucleus_channels, est
 
         if image.dtype is not 'uint8':
             plot_image = (image/np.max(image)*255).astype('uint8')
+        
+        else:
+            plot_image = image
+        
+        # Generates greyscale from average if more than 4 color channels
+        if metadata[idx]["SizeC"] > 3:
+           plot_image = np.mean(plot_image,axis=0) 
+            
 
         plot.show_segmentation(fig,
                                plot_image,
@@ -193,9 +213,11 @@ def segmentation_model(image_group,channels,cyto_channels, nucleus_channels, est
 
         plt.savefig(os.path.join(new_folder,title+'.svg'))
 
-        tifffile.imwrite(new_folder + '/masks.tif',maski.astype('uint16'))
+        tifffile.imwrite(new_folder + '/' + title + ' ' + 'masks.tif',maski.astype('uint16'))
 
-        tifffile.imwrite(new_folder + '/flows.tif',flowi)
+        tifffile.imwrite(new_folder + '/' + title + ' ' + 'flows.tif',flowi)
+                
+        
 
         print('Analyzing ' + str(name) + ' mask data...')
 
@@ -215,7 +237,7 @@ def move_npy_to_folder(current_folder, destination_folder):
             if name.endswith((".npy")):
                 new_destination = os.path.join(destination_folder,name)
                 os.replace(os.path.join(root,name), new_destination)
-    return new_destination
+                return new_destination
 
 def segmentation_model_3d(image_group,channels,cyto_channels, nucleus_channels, estimated_diameter,
                    feature_to_segment, model):
@@ -251,7 +273,7 @@ def segmentation_model_3d(image_group,channels,cyto_channels, nucleus_channels, 
         new_folder = os.path.join(active_folder,str(feature_to_segment)+'_mask')
 
         if '.ome.tif' in path:
-            name = name[:-4]
+            name = Path(path).stem[:-4]
         else:
             name = Path(path).stem
         title = name + ' - ' + feature_to_segment
@@ -330,9 +352,9 @@ def analyze_masks(image, metadata,cyto_channels,nucleus_channels,title,npy_path,
     background_list = np.stack(background_list, axis = 0)
     background_subtracted_list = np.stack(background_subtracted_list, axis = 0)
 
-    tifffile.imwrite(os.path.join(export_path,'Background.tif'), background_list, imagej=True)
+    tifffile.imwrite(os.path.join(export_path, title+' Background.tif'), background_list, imagej=True)
 
-    tifffile.imwrite(os.path.join(export_path,'Background Subtracted Image.tif'), background_subtracted_list, imagej=True)
+    tifffile.imwrite(os.path.join(export_path, title+ ' Background Subtracted Image.tif'), background_subtracted_list, imagej=True)
 
     print('Calculating Mask Data..')
 
